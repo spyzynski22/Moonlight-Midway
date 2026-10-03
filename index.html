@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Moonlight Midway</title>
+  <meta name="description" content="A 3D night carnival in the browser: Bottle Smash, Duck Shoot and Balloon Darts. Win tickets, unlock prizes.">
+  <meta name="theme-color" content="#0d0a22">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23171046'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23ffc54d' stroke-width='2'/%3E%3Cpath d='M16 7v18M7 16h18M9.6 9.6l12.8 12.8M22.4 9.6L9.6 22.4' stroke='%23ffc54d' stroke-width='1.2'/%3E%3Ccircle cx='16' cy='16' r='2.2' fill='%23e8364f'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Rye&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="c" tabindex="0" aria-label="Moonlight Midway 3D carnival"></canvas>
+  <div class="vignette"></div>
+
+  <div id="hub">
+    <header>
+      <div class="marquee"><h1>Moonlight Midway</h1><span class="sub">Three booths · one night · win the giant unicorn</span></div>
+      <div id="prizes"></div>
+    </header>
+    <footer>
+      <div id="cards">
+        <button class="gcard" data-g="0" style="--c:#d42a45">
+          <span class="band"></span>
+          <h3>Bottle Smash</h3>
+          <p>Three balls per stand. Knock all six milk bottles off for a clean sweep.</p>
+          <span class="meta"><span class="goal">Win at 200</span><span class="best">Best 0</span></span>
+        </button>
+        <button class="gcard" data-g="1" style="--c:#2479c9">
+          <span class="band"></span>
+          <h3>Duck Shoot</h3>
+          <p>40 seconds, six corks a clip. Golden ducks pay 50, clocks buy time.</p>
+          <span class="meta"><span class="goal">Win at 450</span><span class="best">Best 0</span></span>
+        </button>
+        <button class="gcard" data-g="2" style="--c:#7a35c4">
+          <span class="band"></span>
+          <h3>Balloon Darts</h3>
+          <p>Hold to steady your hand, release to throw. Gold balloons give a free dart.</p>
+          <span class="meta"><span class="goal">Win at 100</span><span class="best">Best 0</span></span>
+        </button>
+      </div>
+      <div class="hint">Click a booth to play · Esc returns to the midway · M mutes</div>
+    </footer>
+  </div>
+
+  <div id="tix" title="Tickets won">
+    <svg viewBox="0 0 26 18" aria-hidden="true"><path d="M2 2h22v4a3 3 0 0 0 0 6v4H2v-4a3 3 0 0 0 0-6z" fill="#e8364f"/><path d="M9 3v12" stroke="#ffc54d" stroke-width="1.4" stroke-dasharray="2 1.6"/></svg>
+    <span id="tixCount">0</span><small>TICKETS</small>
+  </div>
+
+  <div id="hud">
+    <div id="hudLeft">
+      <button id="backBtn">&#9666; Midway</button>
+      <div class="hudCard">
+        <div id="hudName">Bottle Smash</div>
+        <div id="hudScore">0</div>
+        <div id="goalBar"><div id="goalFill"></div></div>
+        <div id="hudGoal">Win at 200</div>
+      </div>
+    </div>
+    <div id="hudTimer" hidden>40</div>
+    <div id="hudRight"><div id="hudRes"></div><div id="hudCombo"></div></div>
+    <div id="hudTip"></div>
+  </div>
+
+  <div id="banner"><div class="m" id="banM"></div><div class="s" id="banS"></div></div>
+  <div id="pops"></div>
+  <svg id="cross" viewBox="0 0 54 54" aria-hidden="true">
+    <circle cx="27" cy="27" r="15" fill="none" stroke="#fff3dd" stroke-width="2.5"/>
+    <circle cx="27" cy="27" r="15" fill="none" stroke="#e8364f" stroke-width="1" stroke-dasharray="3 3"/>
+    <path d="M27 4v12M27 38v12M4 27h12M38 27h12" stroke="#fff3dd" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="27" cy="27" r="2.2" fill="#e8364f"/>
+  </svg>
+
+  <div id="result" class="screen" hidden>
+    <div class="res" role="dialog" aria-labelledby="resTitle">
+      <div id="resTitle">Winner!</div>
+      <div id="resSub"></div>
+      <div class="resRow">
+        <div><b id="resScore">0</b><span>SCORE</span></div>
+        <div><b id="resTix">+0</b><span>TICKETS</span></div>
+        <div><b id="resBest">0</b><span>BEST</span></div>
+      </div>
+      <div id="resPrize"></div>
+      <div class="btns">
+        <button class="btn" id="againBtn">Play again</button>
+        <button class="btn ghost" id="midwayBtn">Back to the midway</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="mute" aria-label="Mute sound"></button>
+  <div id="loading">Raising the tents&hellip;</div>
+  <div id="err" hidden>The 3D engine didn't load. Check your connection and reload the page.</div>
+
+
+  <!-- Libraries, pinned. Both expose globals (THREE, CANNON), so no bundler or import map is needed. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+
+  <!-- Game scripts: plain scripts sharing top-level names, so order matters. -->
+  <script src="js/core.js"></script>
+  <script src="js/textures.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/midway.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/games/shared.js"></script>
+  <script src="js/games/bottle-smash.js"></script>
+  <script src="js/games/duck-shoot.js"></script>
+  <script src="js/games/balloon-darts.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
